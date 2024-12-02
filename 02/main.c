@@ -7,26 +7,47 @@ typedef struct
     int size;
 } Report;
 
-int eval_report(Report report, const int max_diff)
+int eval_report(Report report, const int max_diff, int err_tolerance)
 {
-    int last = report.rep[0];
     int increasing = (report.rep[0] - report.rep[1]) > 0;
+    int err_count = 0;
+    
     for (int i = 1; i < report.size; i++)
     {
-        int diff = report.rep[last] - report.rep[i];
+        int diff = report.rep[i-1] - report.rep[i];
 
-        if (diff > 0 != increasing)
-        {
-            printf("Direction doesn't match. \n");
+        if (diff > 0 != increasing) {
+            err_count++;
+        }
+
+        else if (abs(diff) > max_diff || diff == 0) {
+            err_count++;
+        }
+
+        if (err_count > err_tolerance) {
+            /*
+            printf(" Fail\t");
+
+            for (int i = 0; i < report.size; i++) {
+                printf("%d, ", report.rep[i]);
+            }
+
+            printf("\n");
+            */
             return 0;
         }
 
-        if (abs(diff) >= max_diff)
-        {
-            printf("Difference is too big. \n");
-            return 0;
-        }
     }
+
+    /*
+    printf(" Pass\t");
+
+    for (int i = 0; i < report.size; i++) {
+        printf("%d, ", report.rep[i]);
+    }
+
+    printf("\n");
+    */
 
     return 1;
 }
@@ -53,7 +74,15 @@ int parse_input(const char path[], Report reports[])
         {
             new_report.rep[new_report.size] = n;
             new_report.size++;
+
+            // skip spaces, and multi-digit numbers
+            while (*cursor != ' ' && cursor) cursor++;
             cursor++;
+        }
+
+        // reset line data
+        for(int i = 0; i < sizeof(line); i++) {
+            line[i] = 0;
         }
 
         reports[report_count] = new_report;
@@ -70,19 +99,29 @@ int parse_input(const char path[], Report reports[])
 int part_1(Report reports[], int size) {
     int safe_count = 0;
     for(int i=0; i<size; i++) {
-        safe_count += eval_report(reports[i], 3);
+        safe_count += eval_report(reports[i], 3, 0);
     }
 
     return safe_count;
 }
 
+int part_2(Report reports[], int size) {
+    int safe_count = 0;
+    for(int i=0; i<size; i++) {
+        safe_count += eval_report(reports[i], 3, 1);
+    }
+
+    return safe_count;  
+}
+
 int main()
 {
     Report rbuffer[2000];
-    int r_count = parse_input("test_input.txt", rbuffer);
+    int r_count = parse_input("input.txt", rbuffer);
 
     printf("%d\n", r_count);
     printf("%d\n", part_1(rbuffer, r_count));
+    printf("%d\n", part_2(rbuffer, r_count));
 
     return 0;
 }
